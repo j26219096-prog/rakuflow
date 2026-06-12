@@ -1,0 +1,37 @@
+name: rakuflow
+version: "1.0.0"
+config-version: 2
+
+profile: rakuflow
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  rakuflow:
+    staging:
+      +materialized: view
+      +schema: staging
+    marts:
+      +materialized: table
+      +schema: marts
+
+vars:
+  rakuflow_start_date: "2016-01-01"
+  test_order_statuses:
+    - "delivered"
+    - "shipped"
+    - "processing"
+    - "approved"
+    - "invoiced"
+    - "unavailable"
+    - "canceled"

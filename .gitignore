@@ -1,0 +1,67 @@
+
+# ── Secrets & credentials ──────────────────────────────────────────────────────
+.env
+*.pem
+*.key
+secrets/
+.streamlit/secrets.toml
+
+# ── Raw data (too large for git) ───────────────────────────────────────────────
+data/raw/*.csv
+data/raw/*.zip
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+pip-wheel-metadata/
+
+# ── Virtual environments ───────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Jupyter ────────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── dbt ────────────────────────────────────────────────────────────────────────
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+
+# ── Airflow ────────────────────────────────────────────────────────────────────
+logs/airflow/
+
+# ── Great Expectations ─────────────────────────────────────────────────────────
+great_expectations/uncommitted/
+
+# ── Spark ─────────────────────────────────────────────────────────────────────
+spark-warehouse/
+derby.log
+metastore_db/
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+.docker/
+
+# ── IDE ────────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Test artifacts ─────────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+*.xml
