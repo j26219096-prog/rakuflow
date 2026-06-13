@@ -1,0 +1,69 @@
+{
+  "name": "RakuFlow — Data Engineering Pipeline",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+
+  // ── Docker-in-Docker for running docker-compose ──────────────────────────
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "17"
+    }
+  },
+
+  // ── Port forwarding ───────────────────────────────────────────────────────
+  "forwardPorts": [8080, 8501, 5432, 9092],
+  "portsAttributes": {
+    "8080": {
+      "label": "Airflow UI",
+      "onAutoForward": "notify"
+    },
+    "8501": {
+      "label": "Streamlit Dashboard",
+      "onAutoForward": "openBrowser"
+    },
+    "5432": {
+      "label": "PostgreSQL"
+    },
+    "9092": {
+      "label": "Kafka"
+    }
+  },
+
+  // ── Post-create: install Python deps + initialize env ─────────────────────
+  "postCreateCommand": "pip install -r requirements.txt && cp -n .env.example .env || true",
+
+  // ── VS Code extensions ────────────────────────────────────────────────────
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "charliermarsh.ruff",
+        "innoverio.vscode-dbt-power-user",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "streetsidesoftware.code-spell-checker"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter"
+        },
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/*.pyc": true,
+          "dbt_project/target": true
+        }
+      }
+    }
+  },
+
+  // ── Run as non-root ───────────────────────────────────────────────────────
+  "remoteUser": "vscode"
+}

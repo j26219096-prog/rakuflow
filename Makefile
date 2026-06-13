@@ -2,7 +2,7 @@
 # Usage: make <target>
 # Requires: Docker, Docker Compose, Python 3.11+
 
-.PHONY: up down run dbt-run dashboard logs reset lint test help
+.PHONY: up down run simple-run dbt-run dashboard logs reset lint test help
 
 COMPOSE = docker-compose
 PYTHON  = python
@@ -18,6 +18,7 @@ endif
 ## Start all RakuFlow services in detached mode
 up:
 	@echo "🚀 Starting RakuFlow services..."
+	docker network create rakuflow-network 2>/dev/null || true
 	$(COMPOSE) up -d
 	@echo "✅ Services started. Airflow UI: http://localhost:8080 | Dashboard: http://localhost:8501"
 
@@ -35,6 +36,7 @@ logs:
 reset:
 	@echo "⚠️  Resetting RakuFlow — this will delete all data volumes!"
 	$(COMPOSE) down -v --remove-orphans
+	docker network rm rakuflow-network 2>/dev/null || true
 	@echo "✅ All containers and volumes removed."
 
 # ── Pipeline commands ──────────────────────────────────────────────────────────
@@ -49,6 +51,14 @@ run:
 		--jars /opt/jars/postgresql-42.7.3.jar \
 		processing/spark_consumer.py
 	@echo "✅ Ingestion pipeline complete."
+
+## Run Kafka producer + simple_consumer (no Spark/Java required — for local dev)
+simple-run:
+	@echo "📤 Running Kafka producer..."
+	$(PYTHON) ingestion/producer.py
+	@echo "⚡ Running simple consumer (psycopg2 — no Spark required)..."
+	$(PYTHON) processing/simple_consumer.py
+	@echo "✅ Ingestion pipeline complete (simple mode)."
 
 ## Run dbt models and then dbt tests
 dbt-run:
@@ -103,16 +113,17 @@ help:
 	@echo ""
 	@echo "RakuFlow — Makefile commands:"
 	@echo ""
-	@echo "  make up          Start all Docker services"
-	@echo "  make down        Stop all Docker services"
-	@echo "  make logs        Stream live service logs"
-	@echo "  make reset       Destroy all containers + volumes"
-	@echo "  make run         Run producer + Spark consumer"
-	@echo "  make dbt-run     Run dbt models + tests"
-	@echo "  make dashboard   Open Streamlit dashboard"
-	@echo "  make quality     Run Great Expectations suite"
-	@echo "  make test        Run Python unit tests"
-	@echo "  make lint        Run code linting"
-	@echo "  make install     Install Python dependencies"
-	@echo "  make init        Initialize .env from .env.example"
+	@echo "  make up           Start all Docker services"
+	@echo "  make down         Stop all Docker services"
+	@echo "  make logs         Stream live service logs"
+	@echo "  make reset        Destroy all containers + volumes"
+	@echo "  make run          Run producer + Spark consumer (requires Spark)"
+	@echo "  make simple-run   Run producer + simple consumer (no Spark needed)"
+	@echo "  make dbt-run      Run dbt models + tests"
+	@echo "  make dashboard    Open Streamlit dashboard"
+	@echo "  make quality      Run Great Expectations suite"
+	@echo "  make test         Run Python unit tests"
+	@echo "  make lint         Run code linting"
+	@echo "  make install      Install Python dependencies"
+	@echo "  make init         Initialize .env from .env.example"
 	@echo ""

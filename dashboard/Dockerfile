@@ -6,14 +6,18 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY requirements-dashboard.txt .
 RUN pip install --no-cache-dir -r requirements-dashboard.txt
 
-# Copy application code
+# Copy application code and Streamlit theme config
 COPY app.py .
+COPY .streamlit/config.toml .streamlit/config.toml
+# Create empty secrets.toml so Streamlit doesn't warn at startup
+RUN touch .streamlit/secrets.toml
 
 # Expose port
 EXPOSE 8501

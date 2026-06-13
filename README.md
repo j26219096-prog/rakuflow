@@ -2,6 +2,9 @@
 
 > A Rakuten-scale, fully Dockerized, end-to-end data engineering platform for e-commerce order analytics — built with Apache Kafka, PySpark, Apache Airflow, dbt, PostgreSQL, Great Expectations, and Streamlit.
 
+[![CI](https://github.com/YOUR_USERNAME/rakuflow/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/rakuflow/actions/workflows/ci.yml)
+[![Integration](https://github.com/YOUR_USERNAME/rakuflow/actions/workflows/integration.yml/badge.svg)](https://github.com/YOUR_USERNAME/rakuflow/actions/workflows/integration.yml)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/YOUR_USERNAME/rakuflow)
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-2.0-231F20?style=flat-square&logo=apachekafka&logoColor=white)](https://kafka.apache.org)
 [![PySpark](https://img.shields.io/badge/PySpark-3.5-E25A1C?style=flat-square&logo=apachespark&logoColor=white)](https://spark.apache.org)
@@ -125,6 +128,44 @@ make dashboard     # Open Streamlit on http://localhost:8501
 | Streamlit       | http://localhost:8501         | —             |
 | PostgreSQL      | localhost:5432                | See .env      |
 | Kafka           | localhost:9092                | —             |
+
+---
+
+## 🚀 Run Directly on GitHub (No Local Setup)
+
+### Option A — GitHub Codespaces (Zero Install)
+
+Click the button in the README or go to **Code → Codespaces → Create codespace on main**.
+
+The devcontainer automatically:
+- Installs all Python dependencies
+- Forwards ports for Airflow (8080), Streamlit (8501), Postgres (5432), Kafka (9092)
+- Opens the Streamlit dashboard in your browser
+
+Then run the pipeline from the Codespace terminal:
+```bash
+make up          # start Kafka + Airflow + Streamlit
+make simple-run  # producer → simple consumer → PostgreSQL
+make dbt-run     # dbt staging + marts
+make dashboard   # open Streamlit
+```
+
+### Option B — GitHub Actions (Automated CI/CD)
+
+Every push and pull request automatically triggers:
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) | Push / PR to `main`, `develop` | Lint (ruff) + unit tests |
+| **Integration** ([`.github/workflows/integration.yml`](.github/workflows/integration.yml)) | Push to `main` / manual | Full pipeline: Kafka → Postgres → dbt → data quality assertions |
+
+The integration workflow spins up real **Kafka** and **PostgreSQL** service containers inside GitHub Actions and runs the entire pipeline end-to-end — no local Docker required.
+
+**To trigger the integration pipeline manually:**
+1. Go to your repo → **Actions** → **Integration — Pipeline E2E Test**
+2. Click **Run workflow** → **Run workflow**
+
+> **Note:** Replace `YOUR_USERNAME` in the README badges with your actual GitHub username after pushing.
 
 ---
 

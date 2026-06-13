@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 
@@ -24,7 +24,7 @@ class OrderEvent:
     delivered_carrier_date: Optional[str]
     delivered_customer_date: Optional[str]
     estimated_delivery_date: Optional[str]
-    event_time: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    event_time: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     schema_version: str = "1.0"
 
     def to_json(self) -> str:
@@ -63,7 +63,7 @@ class PaymentEvent:
     payment_type: str
     payment_installments: int
     payment_value: float
-    event_time: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    event_time: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     schema_version: str = "1.0"
 
     def to_json(self) -> str:

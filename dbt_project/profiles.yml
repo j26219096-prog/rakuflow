@@ -5,8 +5,8 @@ rakuflow:
       type: postgres
       host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
       port: "{{ env_var('POSTGRES_PORT', '5432') | int }}"
-      user: "{{ env_var('POSTGRES_USER', 'jawahar') }}"
-      password: "{{ env_var('POSTGRES_PASSWORD', 'admin') }}"
+      user: "{{ env_var('POSTGRES_USER', 'rakuflow') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD', 'changeme_strong_password') }}"
       dbname: "{{ env_var('POSTGRES_DB', 'rakuflow') }}"
       schema: public
       threads: 4

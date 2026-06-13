@@ -1,0 +1,59 @@
+name: CI — Lint & Unit Tests
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main", "develop"]
+
+jobs:
+  lint-and-test:
+    name: Lint & Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Python setup ─────────────────────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # ── Install lightweight deps (no PySpark/Airflow) ─────────────────────
+      - name: Install test dependencies
+        run: |
+          pip install --upgrade pip
+          pip install \
+            kafka-python==2.0.2 \
+            python-dotenv==1.0.1 \
+            pytest==8.2.1 \
+            pytest-mock==3.14.0 \
+            pytest-cov==5.0.0 \
+            ruff==0.4.7
+
+      # ── Lint ─────────────────────────────────────────────────────────────────
+      - name: Lint with ruff
+        run: |
+          ruff check ingestion/ processing/ dags/ quality/ dashboard/ tests/
+
+      # ── Unit tests ───────────────────────────────────────────────────────────
+      - name: Run unit tests
+        run: |
+          pytest tests/test_producer.py -v \
+            --tb=short \
+            --cov=ingestion \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml
+
+      # ── Upload coverage ──────────────────────────────────────────────────────
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 7

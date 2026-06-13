@@ -1,0 +1,214 @@
+name: Integration — Pipeline E2E Test
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:        # allow manual trigger from GitHub UI
+
+env:
+  POSTGRES_HOST: localhost
+  POSTGRES_PORT: 5432
+  POSTGRES_DB: rakuflow
+  POSTGRES_USER: rakuflow
+  POSTGRES_PASSWORD: ci_test_password
+  KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+  DATA_DIR: ./data/raw
+  MESSAGE_DELAY_SEC: "0"
+
+jobs:
+  integration:
+    name: End-to-End Pipeline
+    runs-on: ubuntu-latest
+
+    services:
+      # ── PostgreSQL ───────────────────────────────────────────────────────────
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: rakuflow
+          POSTGRES_PASSWORD: ci_test_password
+          POSTGRES_DB: rakuflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rakuflow"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+      # ── Zookeeper ────────────────────────────────────────────────────────────
+      zookeeper:
+        image: confluentinc/cp-zookeeper:7.5.0
+        env:
+          ZOOKEEPER_CLIENT_PORT: 2181
+          ZOOKEEPER_TICK_TIME: 2000
+        ports:
+          - 2181:2181
+
+      # ── Kafka ─────────────────────────────────────────────────────────────────
+      kafka:
+        image: confluentinc/cp-kafka:7.5.0
+        env:
+          KAFKA_BROKER_ID: 1
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+          KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+          KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+        ports:
+          - 9092:9092
+        options: >-
+          --health-cmd "kafka-topics --bootstrap-server localhost:9092 --list"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 10
+          --health-start-period 45s
+
+    steps:
+      # ── Checkout ─────────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Python ───────────────────────────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # ── Install pipeline dependencies (no PySpark) ────────────────────────
+      - name: Install pipeline dependencies
+        run: |
+          pip install --upgrade pip
+          pip install \
+            kafka-python==2.0.2 \
+            psycopg2-binary==2.9.9 \
+            sqlalchemy==2.0.30 \
+            python-dotenv==1.0.1 \
+            dbt-core==1.8.1 \
+            dbt-postgres==1.8.1 \
+            pytest==8.2.1 \
+            pytest-mock==3.14.0
+
+      # ── Wait for services ─────────────────────────────────────────────────
+      - name: Wait for Kafka to be ready
+        run: |
+          echo "Waiting for Kafka..."
+          for i in $(seq 1 30); do
+            if python - <<'EOF'
+          from kafka import KafkaProducer
+          try:
+              p = KafkaProducer(bootstrap_servers='localhost:9092')
+              p.close()
+              print("Kafka ready!")
+              exit(0)
+          except Exception as e:
+              exit(1)
+          EOF
+            then break; fi
+            echo "  attempt $i/30 — sleeping 5s"
+            sleep 5
+          done
+
+      # ── Initialize PostgreSQL schema ──────────────────────────────────────
+      - name: Initialize PostgreSQL schema
+        env:
+          PGPASSWORD: ci_test_password
+        run: |
+          psql -h localhost -U rakuflow -d rakuflow -f docker/init.sql
+
+      # ── Generate sample data ──────────────────────────────────────────────
+      - name: Generate sample CSV data
+        run: python scripts/generate_sample_data.py
+
+      # ── Stage 1: Kafka Producer ────────────────────────────────────────────
+      - name: Run Kafka producer
+        run: |
+          cd ingestion
+          python producer.py
+        env:
+          KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+          DATA_DIR: ../data/raw
+          MESSAGE_DELAY_SEC: "0"
+
+      # ── Stage 2: Simple consumer (Kafka → PostgreSQL) ─────────────────────
+      - name: Run simple consumer (Kafka → PostgreSQL)
+        run: |
+          python processing/simple_consumer.py
+        env:
+          KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+          DATA_DIR: ./data/raw
+
+      # ── Verify staging tables have data ───────────────────────────────────
+      - name: Verify staging tables populated
+        env:
+          PGPASSWORD: ci_test_password
+        run: |
+          echo "=== raw_orders row count ==="
+          psql -h localhost -U rakuflow -d rakuflow \
+            -c "SELECT COUNT(*) AS order_count FROM staging.raw_orders;"
+
+          echo "=== raw_payments row count ==="
+          psql -h localhost -U rakuflow -d rakuflow \
+            -c "SELECT COUNT(*) AS payment_count FROM staging.raw_payments;"
+
+          echo "=== raw_sellers row count ==="
+          psql -h localhost -U rakuflow -d rakuflow \
+            -c "SELECT COUNT(*) AS seller_count FROM staging.raw_sellers;"
+
+          # Assert at least 1 row exists in each staging table
+          python - <<'EOF'
+          import psycopg2
+          conn = psycopg2.connect(
+              host="localhost", port=5432, dbname="rakuflow",
+              user="rakuflow", password="ci_test_password"
+          )
+          cur = conn.cursor()
+          for table in ["staging.raw_orders", "staging.raw_payments", "staging.raw_sellers"]:
+              cur.execute(f"SELECT COUNT(*) FROM {table}")
+              count = cur.fetchone()[0]
+              assert count > 0, f"FAIL: {table} is empty!"
+              print(f"PASS: {table} has {count} rows")
+          conn.close()
+          EOF
+
+      # ── Stage 3: dbt run ──────────────────────────────────────────────────
+      - name: Run dbt models
+        run: |
+          cd dbt_project
+          dbt deps --profiles-dir . --target dev || true
+          dbt run --profiles-dir . --target dev
+
+      # ── Stage 4: dbt test ─────────────────────────────────────────────────
+      - name: Run dbt tests
+        run: |
+          cd dbt_project
+          dbt test --profiles-dir . --target dev
+
+      # ── Stage 5: Verify mart tables ───────────────────────────────────────
+      - name: Verify mart tables populated
+        env:
+          PGPASSWORD: ci_test_password
+        run: |
+          python - <<'EOF'
+          import psycopg2
+          conn = psycopg2.connect(
+              host="localhost", port=5432, dbname="rakuflow",
+              user="rakuflow", password="ci_test_password"
+          )
+          cur = conn.cursor()
+          for table in ["marts.fact_orders", "marts.dim_customers", "marts.dim_sellers", "marts.agg_daily_gmv"]:
+              cur.execute(f"SELECT COUNT(*) FROM {table}")
+              count = cur.fetchone()[0]
+              assert count > 0, f"FAIL: {table} is empty!"
+              print(f"PASS: {table} has {count} rows")
+          conn.close()
+          print("\n✅ All mart tables verified!")
+          EOF
+
+      # ── Unit tests (for completeness) ────────────────────────────────────
+      - name: Run unit tests
+        run: |
+          pytest tests/test_producer.py -v --tb=short

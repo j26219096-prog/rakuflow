@@ -10,37 +10,38 @@ sources:
         columns:
           - name: order_id
             description: "Unique identifier for each order."
-            tests:
+            data_tests:
               - not_null
           - name: customer_id
             description: "Unique identifier for each customer."
-            tests:
+            data_tests:
               - not_null
           - name: order_status
             description: "Current status of the order."
-            tests:
+            data_tests:
               - accepted_values:
-                  values:
-                    - delivered
-                    - shipped
-                    - processing
-                    - approved
-                    - invoiced
-                    - unavailable
-                    - canceled
+                  arguments:
+                    values:
+                      - delivered
+                      - shipped
+                      - processing
+                      - approved
+                      - invoiced
+                      - unavailable
+                      - canceled
 
       - name: raw_payments
         description: "Raw payment records written by Spark consumer."
         columns:
           - name: order_id
-            tests:
+            data_tests:
               - not_null
 
       - name: raw_sellers
         description: "Seller reference data loaded from Olist sellers CSV."
         columns:
           - name: seller_id
-            tests:
+            data_tests:
               - not_null
               - unique
 
@@ -48,7 +49,7 @@ sources:
         description: "Order item reference data loaded from Olist order items CSV."
         columns:
           - name: order_id
-            tests:
+            data_tests:
               - not_null
 
 
@@ -58,35 +59,36 @@ models:
     columns:
       - name: order_id
         description: "Primary key for orders."
-        tests:
+        data_tests:
           - not_null
           - unique
       - name: customer_id
-        tests:
+        data_tests:
           - not_null
       - name: order_status
-        tests:
+        data_tests:
           - not_null
           - accepted_values:
-              values:
-                - delivered
-                - shipped
-                - processing
-                - approved
-                - invoiced
-                - unavailable
-                - canceled
+              arguments:
+                values:
+                  - delivered
+                  - shipped
+                  - processing
+                  - approved
+                  - invoiced
+                  - unavailable
+                  - canceled
 
   - name: stg_customers
     description: "Deduplicated and normalized customers."
     columns:
       - name: customer_key
         description: "Surrogate key for customers."
-        tests:
+        data_tests:
           - not_null
           - unique
       - name: customer_id
-        tests:
+        data_tests:
           - not_null
           - unique
 
@@ -94,11 +96,11 @@ models:
     description: "Deduplicated sellers with normalized city/state."
     columns:
       - name: seller_key
-        tests:
+        data_tests:
           - not_null
           - unique
       - name: seller_id
-        tests:
+        data_tests:
           - not_null
           - unique
 
@@ -107,36 +109,37 @@ models:
     columns:
       - name: order_id
         description: "Grain: one row per order."
-        tests:
+        data_tests:
           - not_null
           - unique
       - name: customer_key
-        tests:
+        data_tests:
           - not_null
       - name: payment_value
-        tests:
+        data_tests:
           - not_null
       - name: order_status
-        tests:
+        data_tests:
           - accepted_values:
-              values:
-                - delivered
-                - shipped
-                - processing
-                - approved
-                - invoiced
-                - unavailable
-                - canceled
+              arguments:
+                values:
+                  - delivered
+                  - shipped
+                  - processing
+                  - approved
+                  - invoiced
+                  - unavailable
+                  - canceled
 
   - name: dim_customers
     description: "Customer dimension (SCD Type 1)."
     columns:
       - name: customer_key
-        tests:
+        data_tests:
           - not_null
           - unique
       - name: customer_id
-        tests:
+        data_tests:
           - not_null
           - unique
 
@@ -144,7 +147,7 @@ models:
     description: "Seller dimension with aggregated metrics."
     columns:
       - name: seller_key
-        tests:
+        data_tests:
           - not_null
           - unique
 
@@ -152,9 +155,9 @@ models:
     description: "Daily GMV aggregate table."
     columns:
       - name: order_date
-        tests:
+        data_tests:
           - not_null
           - unique
       - name: total_gmv
-        tests:
+        data_tests:
           - not_null

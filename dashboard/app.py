@@ -14,7 +14,7 @@ Data source: PostgreSQL mart tables populated by dbt.
 from __future__ import annotations
 
 import os
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
 import pandas as pd
@@ -157,7 +157,7 @@ def load_daily_gmv(start_date: date, end_date: date) -> pd.DataFrame:
     query = text(
         """
         SELECT order_date, total_orders, total_gmv, avg_payment_value, avg_delivery_days
-        FROM public_marts.agg_daily_gmv
+        FROM marts.agg_daily_gmv
         WHERE order_date BETWEEN :start AND :end
         ORDER BY order_date
         """
@@ -182,7 +182,7 @@ def load_top_sellers(top_n: int = 10, state_filter: Optional[str] = None) -> pd.
     query = text(
         f"""
         SELECT seller_id, city, state, total_orders, total_revenue
-        FROM public_marts.dim_sellers
+        FROM marts.dim_sellers
         WHERE total_revenue > 0
         {state_clause}
         ORDER BY total_revenue DESC
@@ -211,7 +211,7 @@ def load_order_status_dist(start_date: date, end_date: date) -> pd.DataFrame:
     query = text(
         """
         SELECT order_status, COUNT(*) as order_count
-        FROM public_marts.fact_orders
+        FROM marts.fact_orders
         WHERE order_purchase_timestamp::date BETWEEN :start AND :end
         GROUP BY order_status
         ORDER BY order_count DESC
@@ -239,7 +239,7 @@ def load_delivery_by_state(state_filter: Optional[str] = None) -> pd.DataFrame:
             customer_state,
             ROUND(AVG(delivery_days)::numeric, 1) AS avg_delivery_days,
             COUNT(*) AS total_orders
-        FROM public_marts.fact_orders
+        FROM marts.fact_orders
         WHERE delivery_days IS NOT NULL
             AND customer_state IS NOT NULL
             {state_clause}
@@ -273,7 +273,7 @@ def load_kpis(start_date: date, end_date: date) -> dict:
             ROUND(SUM(fo.payment_value)::numeric, 2)          AS total_gmv,
             ROUND(AVG(fo.delivery_days)::numeric, 1)          AS avg_delivery_days,
             COUNT(DISTINCT fo.seller_key)                     AS active_sellers
-        FROM public_marts.fact_orders fo
+        FROM marts.fact_orders fo
         WHERE fo.order_purchase_timestamp::date BETWEEN :start AND :end
         """
     )
@@ -639,7 +639,7 @@ def main() -> None:
                     text-align: center;
                 ">
                     RakuFlow · Built for Rakuten Japan Internship Application ·
-                    Last refreshed: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}
+                    Last refreshed: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}
                 </div>
                 """,
                 unsafe_allow_html=True,

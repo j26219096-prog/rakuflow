@@ -4,7 +4,6 @@
 *.pem
 *.key
 secrets/
-.streamlit/secrets.toml
 
 # ── Raw data (too large for git) ───────────────────────────────────────────────
 data/raw/*.csv
@@ -39,7 +38,8 @@ dbt_project/dbt_packages/
 dbt_project/logs/
 
 # ── Airflow ────────────────────────────────────────────────────────────────────
-logs/airflow/
+logs/airflow/*
+!logs/airflow/.gitkeep
 
 # ── Great Expectations ─────────────────────────────────────────────────────────
 great_expectations/uncommitted/
