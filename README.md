@@ -2,9 +2,9 @@
 
 > A Rakuten-scale, fully Dockerized, end-to-end data engineering platform for e-commerce order analytics — built with Apache Kafka, PySpark, Apache Airflow, dbt, PostgreSQL, Great Expectations, and Streamlit.
 
-[![CI](https://github.com/YOUR_USERNAME/rakuflow/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/rakuflow/actions/workflows/ci.yml)
-[![Integration](https://github.com/YOUR_USERNAME/rakuflow/actions/workflows/integration.yml/badge.svg)](https://github.com/YOUR_USERNAME/rakuflow/actions/workflows/integration.yml)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/YOUR_USERNAME/rakuflow)
+[![CI](https://github.com/j26219096-prog/rakuflow/actions/workflows/ci.yml/badge.svg)](https://github.com/j26219096-prog/rakuflow/actions/workflows/ci.yml)
+[![Integration](https://github.com/j26219096-prog/rakuflow/actions/workflows/integration.yml/badge.svg)](https://github.com/j26219096-prog/rakuflow/actions/workflows/integration.yml)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/j26219096-prog/rakuflow)
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-2.0-231F20?style=flat-square&logo=apachekafka&logoColor=white)](https://kafka.apache.org)
 [![PySpark](https://img.shields.io/badge/PySpark-3.5-E25A1C?style=flat-square&logo=apachespark&logoColor=white)](https://spark.apache.org)
@@ -82,7 +82,7 @@ flowchart LR
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/rakuflow.git
+git clone https://github.com/j26219096-prog/rakuflow.git
 cd rakuflow
 ```
 
@@ -165,7 +165,7 @@ The integration workflow spins up real **Kafka** and **PostgreSQL** service cont
 1. Go to your repo → **Actions** → **Integration — Pipeline E2E Test**
 2. Click **Run workflow** → **Run workflow**
 
-> **Note:** Replace `YOUR_USERNAME` in the README badges with your actual GitHub username after pushing.
+> **Note:** The badges and Codespace buttons are now fully configured for the repository.
 
 ---
 
