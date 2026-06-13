@@ -20,15 +20,14 @@ sources:
             description: "Current status of the order."
             data_tests:
               - accepted_values:
-                  arguments:
-                    values:
-                      - delivered
-                      - shipped
-                      - processing
-                      - approved
-                      - invoiced
-                      - unavailable
-                      - canceled
+                  values:
+                    - delivered
+                    - shipped
+                    - processing
+                    - approved
+                    - invoiced
+                    - unavailable
+                    - canceled
 
       - name: raw_payments
         description: "Raw payment records written by Spark consumer."
@@ -69,15 +68,14 @@ models:
         data_tests:
           - not_null
           - accepted_values:
-              arguments:
-                values:
-                  - delivered
-                  - shipped
-                  - processing
-                  - approved
-                  - invoiced
-                  - unavailable
-                  - canceled
+              values:
+                - delivered
+                - shipped
+                - processing
+                - approved
+                - invoiced
+                - unavailable
+                - canceled
 
   - name: stg_customers
     description: "Deduplicated and normalized customers."
@@ -121,15 +119,14 @@ models:
       - name: order_status
         data_tests:
           - accepted_values:
-              arguments:
-                values:
-                  - delivered
-                  - shipped
-                  - processing
-                  - approved
-                  - invoiced
-                  - unavailable
-                  - canceled
+              values:
+                - delivered
+                - shipped
+                - processing
+                - approved
+                - invoiced
+                - unavailable
+                - canceled
 
   - name: dim_customers
     description: "Customer dimension (SCD Type 1)."
