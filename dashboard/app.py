@@ -14,11 +14,10 @@ Data source: PostgreSQL mart tables populated by dbt.
 from __future__ import annotations
 
 import os
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timezone
 from typing import Optional
 
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from sqlalchemy import create_engine, text

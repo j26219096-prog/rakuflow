@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -188,7 +187,6 @@ class TestCleanOrders:
     def test_clean_orders_deduplicates(self, spark: "SparkSession") -> None:
         """Duplicate order_ids should be deduplicated to one row per order."""
         import json
-        from datetime import datetime
         from spark_consumer import clean_orders
 
         rows = [

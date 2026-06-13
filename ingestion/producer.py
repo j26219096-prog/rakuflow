@@ -12,7 +12,6 @@ Topics:
 from __future__ import annotations
 
 import csv
-import json
 import logging
 import os
 import time
