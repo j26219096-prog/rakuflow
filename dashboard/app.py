@@ -9,6 +9,8 @@ Provides real-time e-commerce analytics powered by the RakuFlow data pipeline:
     - Avg delivery days by state (horizontal bar chart)
 
 Data source: PostgreSQL mart tables populated by dbt.
+Cloud deployment: reads DB credentials from st.secrets (Streamlit Cloud)
+                  or environment variables (local / Docker).
 """
 
 from __future__ import annotations
@@ -120,15 +122,37 @@ PLOTLY_THEME = dict(
 
 # ── Database connection ────────────────────────────────────────────────────────
 
-@st.cache_resource
-def get_engine():
+def _get_db_url() -> str:
     """
-    Build and cache a SQLAlchemy engine using env vars.
+    Resolve PostgreSQL connection URL from st.secrets (Streamlit Cloud)
+    or environment variables (local / Docker).
 
-    Returns:
-        SQLAlchemy Engine connected to PostgreSQL.
+    Priority: st.secrets["postgres"] > st.secrets["POSTGRES_URL"] > env vars
     """
-    url = (
+    # Option 1: Full URL in secrets
+    try:
+        if "POSTGRES_URL" in st.secrets:
+            return st.secrets["POSTGRES_URL"]
+    except Exception:
+        pass
+
+    # Option 2: Individual fields in secrets [postgres] section
+    try:
+        pg = st.secrets.get("postgres", {})
+        if pg:
+            return (
+                f"postgresql+psycopg2://"
+                f"{pg.get('user', 'rakuflow')}:"
+                f"{pg.get('password', 'rakuflow')}"
+                f"@{pg.get('host', 'localhost')}:"
+                f"{pg.get('port', 5432)}/"
+                f"{pg.get('dbname', 'rakuflow')}"
+            )
+    except Exception:
+        pass
+
+    # Option 3: Environment variables (local dev / Docker)
+    return (
         f"postgresql+psycopg2://"
         f"{os.getenv('POSTGRES_USER', 'rakuflow')}:"
         f"{os.getenv('POSTGRES_PASSWORD', 'rakuflow')}"
@@ -136,7 +160,87 @@ def get_engine():
         f"{os.getenv('POSTGRES_PORT', '5432')}/"
         f"{os.getenv('POSTGRES_DB', 'rakuflow')}"
     )
-    return create_engine(url, pool_pre_ping=True)
+
+
+@st.cache_resource
+def get_engine():
+    """
+    Build and cache a SQLAlchemy engine.
+
+    Returns:
+        SQLAlchemy Engine connected to PostgreSQL, or None if unavailable.
+    """
+    try:
+        engine = create_engine(_get_db_url(), pool_pre_ping=True, connect_args={"connect_timeout": 5})
+        # Test connection
+        with engine.connect():
+            pass
+        return engine
+    except Exception:
+        return None
+
+
+def _db_available() -> bool:
+    """Return True if a live DB connection is available."""
+    return get_engine() is not None
+
+
+# ── Data queries ───────────────────────────────────────────────────────────────
+
+# ── Demo data (shown on Streamlit Cloud when no DB is configured) ──────────────
+
+def _demo_daily_gmv() -> pd.DataFrame:
+    """Return synthetic daily GMV data for the demo mode."""
+    import numpy as np
+    rng = np.random.default_rng(42)
+    dates = pd.date_range("2017-01-01", "2018-09-30", freq="D")
+    gmv = rng.uniform(2000, 18000, len(dates)).cumsum() / len(dates) * 200 + rng.uniform(1000, 5000, len(dates))
+    orders = rng.integers(3, 25, len(dates))
+    return pd.DataFrame({"order_date": dates.date, "total_orders": orders,
+                         "total_gmv": gmv.round(2), "avg_payment_value": (gmv / orders).round(2),
+                         "avg_delivery_days": rng.uniform(5, 20, len(dates)).round(1)})
+
+
+def _demo_top_sellers() -> pd.DataFrame:
+    """Return synthetic seller data for demo mode."""
+    import uuid, numpy as np
+    rng = np.random.default_rng(42)
+    states = ["SP", "RJ", "MG", "RS", "PR", "SC", "BA", "GO", "PE", "CE"]
+    cities = ["São Paulo", "Rio de Janeiro", "Belo Horizonte", "Porto Alegre",
+              "Curitiba", "Florianópolis", "Salvador", "Goiânia", "Recife", "Fortaleza"]
+    return pd.DataFrame({
+        "seller_id": [str(uuid.UUID(int=rng.integers(0, 2**128))) for _ in range(10)],
+        "city": cities, "state": states,
+        "total_orders": rng.integers(20, 200, 10),
+        "total_revenue": rng.uniform(5000, 80000, 10).round(2),
+    }).sort_values("total_revenue", ascending=False)
+
+
+def _demo_order_status() -> pd.DataFrame:
+    """Return synthetic order status distribution for demo mode."""
+    return pd.DataFrame({
+        "order_status": ["delivered", "shipped", "canceled", "processing", "invoiced", "approved"],
+        "order_count": [7023, 1107, 625, 301, 194, 150],
+    })
+
+
+def _demo_delivery_by_state() -> pd.DataFrame:
+    """Return synthetic delivery days by state for demo mode."""
+    import numpy as np
+    rng = np.random.default_rng(42)
+    states = ["AM", "PA", "RR", "AP", "MA", "RN", "CE", "BA", "MG", "SP",
+              "RJ", "PR", "RS", "SC", "GO", "DF", "MT", "MS", "PE", "AL"]
+    return pd.DataFrame({
+        "customer_state": states,
+        "avg_delivery_days": rng.uniform(8, 28, len(states)).round(1),
+        "total_orders": rng.integers(50, 800, len(states)),
+    }).sort_values("avg_delivery_days", ascending=False)
+
+
+def _demo_kpis() -> dict:
+    """Return demo KPI values."""
+    return {"total_orders": 9400, "total_gmv": 1_247_832.50,
+            "avg_delivery_days": 12.3, "active_sellers": 50}
 
 
 # ── Data queries ───────────────────────────────────────────────────────────────
@@ -153,6 +257,9 @@ def load_daily_gmv(start_date: date, end_date: date) -> pd.DataFrame:
     Returns:
         DataFrame with columns: order_date, total_orders, total_gmv, avg_payment_value.
     """
+    if not _db_available():
+        df = _demo_daily_gmv()
+        return df[(df["order_date"] >= start_date) & (df["order_date"] <= end_date)]
     query = text(
         """
         SELECT order_date, total_orders, total_gmv, avg_payment_value, avg_delivery_days
@@ -177,6 +284,11 @@ def load_top_sellers(top_n: int = 10, state_filter: Optional[str] = None) -> pd.
     Returns:
         DataFrame with columns: seller_id, city, state, total_orders, total_revenue.
     """
+    if not _db_available():
+        df = _demo_top_sellers()
+        if state_filter:
+            df = df[df["state"] == state_filter]
+        return df.head(top_n)
     state_clause = "AND state = :state" if state_filter else ""
     query = text(
         f"""
@@ -207,6 +319,8 @@ def load_order_status_dist(start_date: date, end_date: date) -> pd.DataFrame:
     Returns:
         DataFrame with columns: order_status, order_count.
     """
+    if not _db_available():
+        return _demo_order_status()
     query = text(
         """
         SELECT order_status, COUNT(*) as order_count
@@ -231,6 +345,11 @@ def load_delivery_by_state(state_filter: Optional[str] = None) -> pd.DataFrame:
     Returns:
         DataFrame with columns: customer_state, avg_delivery_days, total_orders.
     """
+    if not _db_available():
+        df = _demo_delivery_by_state()
+        if state_filter:
+            df = df[df["customer_state"] == state_filter]
+        return df
     state_clause = "AND customer_state = :state" if state_filter else ""
     query = text(
         f"""
@@ -265,6 +384,8 @@ def load_kpis(start_date: date, end_date: date) -> dict:
     Returns:
         Dictionary with keys: total_orders, total_gmv, avg_delivery_days, active_sellers.
     """
+    if not _db_available():
+        return _demo_kpis()
     query = text(
         """
         SELECT
@@ -570,85 +691,87 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
+    # Demo mode banner
+    if not _db_available():
+        st.info(
+            "📊 **Demo Mode** — Showing sample data. "
+            "Connect a PostgreSQL database via [Streamlit secrets](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/secrets-management) "
+            "to see live pipeline data.",
+            icon="ℹ️",
+        )
+
     # Load KPIs
     with st.spinner("Loading analytics…"):
-        try:
-            kpis = load_kpis(start_date, end_date)
-            render_kpis(kpis)
+        kpis = load_kpis(start_date, end_date)
+        render_kpis(kpis)
 
-            st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
 
-            # Row 1: GMV trend + Order status
-            col1, col2 = st.columns([3, 2])
-            with col1:
-                df_gmv = load_daily_gmv(start_date, end_date)
-                if df_gmv.empty:
-                    st.info("No GMV data for selected date range.")
-                else:
-                    st.plotly_chart(
-                        chart_daily_gmv(df_gmv), use_container_width=True, key="gmv_chart"
-                    )
+        # Row 1: GMV trend + Order status
+        col1, col2 = st.columns([3, 2])
+        with col1:
+            df_gmv = load_daily_gmv(start_date, end_date)
+            if df_gmv.empty:
+                st.info("No GMV data for selected date range.")
+            else:
+                st.plotly_chart(
+                    chart_daily_gmv(df_gmv), use_container_width=True, key="gmv_chart"
+                )
 
-            with col2:
-                df_status = load_order_status_dist(start_date, end_date)
-                if df_status.empty:
-                    st.info("No order status data.")
-                else:
-                    st.plotly_chart(
-                        chart_order_status(df_status),
-                        use_container_width=True,
-                        key="status_chart",
-                    )
+        with col2:
+            df_status = load_order_status_dist(start_date, end_date)
+            if df_status.empty:
+                st.info("No order status data.")
+            else:
+                st.plotly_chart(
+                    chart_order_status(df_status),
+                    use_container_width=True,
+                    key="status_chart",
+                )
 
-            st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
 
-            # Row 2: Top sellers + Delivery by state
-            col3, col4 = st.columns(2)
-            with col3:
-                df_sellers = load_top_sellers(top_n=10, state_filter=state_filter)
-                if df_sellers.empty:
-                    st.info("No seller data available.")
-                else:
-                    st.plotly_chart(
-                        chart_top_sellers(df_sellers),
-                        use_container_width=True,
-                        key="sellers_chart",
-                    )
+        # Row 2: Top sellers + Delivery by state
+        col3, col4 = st.columns(2)
+        with col3:
+            df_sellers = load_top_sellers(top_n=10, state_filter=state_filter)
+            if df_sellers.empty:
+                st.info("No seller data available.")
+            else:
+                st.plotly_chart(
+                    chart_top_sellers(df_sellers),
+                    use_container_width=True,
+                    key="sellers_chart",
+                )
 
-            with col4:
-                df_delivery = load_delivery_by_state(state_filter=state_filter)
-                if df_delivery.empty:
-                    st.info("No delivery data available.")
-                else:
-                    st.plotly_chart(
-                        chart_delivery_by_state(df_delivery),
-                        use_container_width=True,
-                        key="delivery_chart",
-                    )
+        with col4:
+            df_delivery = load_delivery_by_state(state_filter=state_filter)
+            if df_delivery.empty:
+                st.info("No delivery data available.")
+            else:
+                st.plotly_chart(
+                    chart_delivery_by_state(df_delivery),
+                    use_container_width=True,
+                    key="delivery_chart",
+                )
 
-            # Footer
-            st.markdown(
-                f"""
-                <div style="
-                    margin-top: 2rem;
-                    padding: 1rem;
-                    border-top: 1px solid rgba(255,255,255,0.08);
-                    font-size: 0.75rem;
-                    color: rgba(255,255,255,0.3);
-                    text-align: center;
-                ">
-                    RakuFlow · Built for Rakuten Japan Internship Application ·
-                    Last refreshed: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-        except Exception as exc:
-            st.error(
-                f"⚠️ Database connection error: {exc}\n\n"
-                "Make sure PostgreSQL is running and dbt models have been built."
-            )
+        # Footer
+        st.markdown(
+            f"""
+            <div style="
+                margin-top: 2rem;
+                padding: 1rem;
+                border-top: 1px solid rgba(255,255,255,0.08);
+                font-size: 0.75rem;
+                color: rgba(255,255,255,0.3);
+                text-align: center;
+            ">
+                RakuFlow · Built for Rakuten Japan Internship Application ·
+                Last refreshed: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 
 if __name__ == "__main__":

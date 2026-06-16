@@ -1,5 +1,6 @@
 # RakuFlow — pinned Python dependencies
 # Install with: pip install -r requirements.txt
+# For Streamlit Cloud deployment, see: dashboard/requirements.txt
 
 # ── Kafka ──────────────────────────────────────────────────────────────────────
 kafka-python==2.0.2
