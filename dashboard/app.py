@@ -203,7 +203,8 @@ def _demo_daily_gmv() -> pd.DataFrame:
 
 def _demo_top_sellers() -> pd.DataFrame:
     """Return synthetic seller data for demo mode."""
-    import uuid, numpy as np
+    import uuid
+    import numpy as np
     rng = np.random.default_rng(42)
     states = ["SP", "RJ", "MG", "RS", "PR", "SC", "BA", "GO", "PE", "CE"]
     cities = ["São Paulo", "Rio de Janeiro", "Belo Horizonte", "Porto Alegre",

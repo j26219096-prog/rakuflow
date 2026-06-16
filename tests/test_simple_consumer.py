@@ -15,13 +15,10 @@ Tests cover:
 from __future__ import annotations
 
 import csv
-import json
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 # ── Adjust sys.path to find processing module ──────────────────────────────────
 import sys
