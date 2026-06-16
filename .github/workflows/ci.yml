@@ -29,6 +29,7 @@ jobs:
           pip install --upgrade pip
           pip install \
             kafka-python==2.0.2 \
+            psycopg2-binary==2.9.9 \
             python-dotenv==1.0.1 \
             pytest==8.2.1 \
             pytest-mock==3.14.0 \
@@ -43,9 +44,9 @@ jobs:
       # ── Unit tests ───────────────────────────────────────────────────────────
       - name: Run unit tests
         run: |
-          pytest tests/test_producer.py -v \
+          pytest tests/test_producer.py tests/test_simple_consumer.py -v \
             --tb=short \
-            --cov=ingestion \
+            --cov=ingestion --cov=processing \
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml
 

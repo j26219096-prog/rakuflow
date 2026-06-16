@@ -308,11 +308,16 @@ rakuflow/
 
 ## 📷 Screenshots
 
-> _Coming soon — run the pipeline and add screenshots here._
+Run the pipeline locally and the Streamlit dashboard will be available at `http://localhost:8501`.
+Key views include:
 
-| Dashboard Overview | Daily GMV Trend | Top Sellers |
-|---|---|---|
-| `screenshots/dashboard.png` | `screenshots/gmv_trend.png` | `screenshots/top_sellers.png` |
+- **Dashboard Overview** — KPI cards (Total Orders, GMV, Avg Delivery Days, Active Sellers)
+- **Daily GMV Trend** — dual-axis line chart with order volume overlay
+- **Top 10 Sellers** — horizontal revenue bar chart
+- **Order Status Distribution** — donut chart
+- **Delivery Days by State** — color-coded bar chart
+
+> To capture your own screenshots, run `make up && make simple-run && make dbt-run && make dashboard`.
 
 ---
 
@@ -398,6 +403,12 @@ All configuration is managed via `.env` (never committed). Key variables:
 ## 📄 License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on setting up a development environment, running tests, code style, and submitting pull requests.
 
 ---
 
