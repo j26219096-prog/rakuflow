@@ -1,38 +1,7 @@
-# RakuFlow — pinned Python dependencies
-# Install with: pip install -r requirements.txt
-# For Streamlit Cloud deployment, see: dashboard/requirements.txt
-
-# ── Kafka ──────────────────────────────────────────────────────────────────────
-kafka-python==2.0.2
-
-# ── PySpark ────────────────────────────────────────────────────────────────────
-pyspark==3.5.1
-
-# ── Apache Airflow ─────────────────────────────────────────────────────────────
-apache-airflow==2.9.0
-apache-airflow-providers-postgres==5.10.0
-
-# ── dbt ────────────────────────────────────────────────────────────────────────
-dbt-core==1.8.1
-dbt-postgres==1.8.1
-dbt-utils==1.2.0
-
-# ── PostgreSQL / SQLAlchemy ────────────────────────────────────────────────────
-psycopg2-binary==2.9.9
-sqlalchemy==2.0.30
-
-# ── Great Expectations ─────────────────────────────────────────────────────────
-great-expectations==0.18.19
-
-# ── Streamlit Dashboard ────────────────────────────────────────────────────────
 streamlit==1.35.0
 plotly==5.22.0
 pandas==2.2.2
-
-# ── Utilities ──────────────────────────────────────────────────────────────────
+sqlalchemy==2.0.30
+psycopg2-binary==2.9.9
 python-dotenv==1.0.1
-requests==2.32.3
-
-# ── Testing ────────────────────────────────────────────────────────────────────
-pytest==8.2.1
-pytest-mock==3.14.0
+numpy>=1.26.0

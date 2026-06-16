@@ -51,8 +51,8 @@ Please be respectful and constructive in all interactions. We follow the [Contri
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
+### 3. Install Dependencies
+pip install -r requirements-dev.txt
 
 # Run unit tests (no Kafka or Postgres needed)
 pytest tests/test_producer.py tests/test_simple_consumer.py -v

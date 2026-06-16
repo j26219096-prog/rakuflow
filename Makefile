@@ -96,7 +96,7 @@ lint:
 ## Install Python dependencies locally
 install:
 	@echo "📦 Installing dependencies..."
-	pip install -r requirements.txt
+	pip install -r requirements-dev.txt
 	@echo "✅ Dependencies installed."
 
 ## Copy .env.example to .env (first-time setup)

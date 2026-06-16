@@ -38,7 +38,7 @@ x-airflow-common: &airflow-common
     - ./dbt_project:/opt/rakuflow/dbt_project
     - ./quality:/opt/rakuflow/quality
     - ./data:/opt/rakuflow/data
-    - ./requirements.txt:/requirements.txt
+    - ./requirements-dev.txt:/requirements-dev.txt
   extra_hosts:
     - "host.docker.internal:host-gateway"
   networks:
@@ -116,7 +116,7 @@ services:
     command:
       - -c
       - |
-        pip install --quiet -r /requirements.txt
+        pip install --quiet -r /requirements-dev.txt
         airflow db upgrade
         airflow users create \
           --username admin \
