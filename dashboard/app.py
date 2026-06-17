@@ -441,14 +441,14 @@ def render_sidebar() -> tuple[date, date, Optional[str]]:
             "From",
             value=date(2017, 1, 1),
             min_value=date(2016, 1, 1),
-            max_value=date.today(),
+            max_value=date(2018, 12, 31),
             key="start_date",
         )
         end_date = st.date_input(
             "To",
             value=date(2018, 12, 31),
             min_value=date(2016, 1, 1),
-            max_value=date.today(),
+            max_value=date(2018, 12, 31),
             key="end_date",
         )
 
