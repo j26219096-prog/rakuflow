@@ -42,7 +42,7 @@ st.markdown(
         html, body, [class*="css"] {
             font-family: 'Inter', sans-serif;
         }
-        h1, h2, h3, h4, h5, h6 {
+        h1, h2, h3, h4, h5, h6, label, label p, .stSelectbox label, .stDateInput label {
             color: #ffffff !important;
         }
 
@@ -560,6 +560,7 @@ def chart_daily_gmv(df: pd.DataFrame) -> go.Figure:
             xanchor="center",
             x=0.5,
             bgcolor="rgba(0,0,0,0)",
+            font=dict(color="white"),
         ),
         hovermode="x unified",
         **PLOTLY_THEME,
@@ -632,7 +633,7 @@ def chart_order_status(df: pd.DataFrame) -> go.Figure:
     fig.update_layout(
         title="Order Status Distribution",
         showlegend=True,
-        legend=dict(orientation="v", bgcolor="rgba(0,0,0,0)"),
+        legend=dict(orientation="v", bgcolor="rgba(0,0,0,0)", font=dict(color="white")),
         **PLOTLY_THEME,
     )
     return fig
