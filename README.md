@@ -1,5 +1,8 @@
 # ⚡ RakuFlow — Production-Grade E-Commerce Data Engineering Pipeline
 
+> 🔴 **Live Demo**: [https://rakuflow.streamlit.app](https://rakuflow.streamlit.app)  
+> _(Dashboard fully cloud-hosted on Streamlit Community Cloud and powered by Neon Serverless PostgreSQL)_
+
 > A Rakuten-scale, fully Dockerized, end-to-end data engineering platform for e-commerce order analytics — built with Apache Kafka, PySpark, Apache Airflow, dbt, PostgreSQL, Great Expectations, and Streamlit.
 
 [![CI](https://github.com/j26219096-prog/rakuflow/actions/workflows/ci.yml/badge.svg)](https://github.com/j26219096-prog/rakuflow/actions/workflows/ci.yml)
@@ -32,12 +35,12 @@ flowchart LR
     end
 
     subgraph Warehouse["🗄️ Data Warehouse"]
-        PG[("PostgreSQL 15\nstaging schema")]
+        PG[("Neon Serverless\nPostgreSQL 15\nstaging schema")]
     end
 
     subgraph Transform["🔧 Transformation"]
         DBT["dbt-core\nStaging → Marts"]
-        MARTS[("PostgreSQL 15\nMarts schema")]
+        MARTS[("Neon Serverless\nPostgreSQL 15\nMarts schema")]
     end
 
     subgraph Quality["✅ Data Quality"]
@@ -45,7 +48,7 @@ flowchart LR
     end
 
     subgraph Visualization["📊 Analytics"]
-        ST["Streamlit Dashboard\nlocalhost:8501"]
+        ST["Streamlit Cloud\nrakuflow.streamlit.app"]
     end
 
     subgraph Orchestration["🎯 Orchestration"]
