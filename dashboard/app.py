@@ -23,6 +23,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 from sqlalchemy import create_engine, text
+from streamlit_autorefresh import st_autorefresh
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -40,6 +41,9 @@ st.markdown(
 
         html, body, [class*="css"] {
             font-family: 'Inter', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #ffffff !important;
         }
 
         /* Dark gradient background */
@@ -115,6 +119,7 @@ PLOTLY_THEME = dict(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
     font=dict(color="rgba(255,255,255,0.85)", family="Inter"),
+    title_font=dict(color="#ffffff", size=16),
     margin=dict(l=10, r=10, t=40, b=10),
     colorway=["#845adf", "#4ade80", "#f59e0b", "#38bdf8", "#fb7185", "#a78bfa"],
 )
@@ -246,7 +251,7 @@ def _demo_kpis() -> dict:
 
 # ── Data queries ───────────────────────────────────────────────────────────────
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=5)
 def load_daily_gmv(start_date: date, end_date: date) -> pd.DataFrame:
     """
     Load daily GMV data filtered by date range.
@@ -273,7 +278,7 @@ def load_daily_gmv(start_date: date, end_date: date) -> pd.DataFrame:
         return pd.read_sql(query, conn, params={"start": start_date, "end": end_date})
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=5)
 def load_top_sellers(top_n: int = 10, state_filter: Optional[str] = None) -> pd.DataFrame:
     """
     Load top N sellers by total revenue, optionally filtered by state.
@@ -308,7 +313,7 @@ def load_top_sellers(top_n: int = 10, state_filter: Optional[str] = None) -> pd.
         return pd.read_sql(query, conn, params=params)
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=5)
 def load_order_status_dist(start_date: date, end_date: date) -> pd.DataFrame:
     """
     Load order status distribution for a date range.
@@ -335,7 +340,7 @@ def load_order_status_dist(start_date: date, end_date: date) -> pd.DataFrame:
         return pd.read_sql(query, conn, params={"start": start_date, "end": end_date})
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=5)
 def load_delivery_by_state(state_filter: Optional[str] = None) -> pd.DataFrame:
     """
     Load average delivery days grouped by customer state.
@@ -373,7 +378,7 @@ def load_delivery_by_state(state_filter: Optional[str] = None) -> pd.DataFrame:
         return pd.read_sql(query, conn, params=params)
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=5)
 def load_kpis(start_date: date, end_date: date) -> dict:
     """
     Load KPI summary metrics for the selected date range.
@@ -462,7 +467,7 @@ def render_sidebar() -> tuple[date, date, Optional[str]]:
             """
             <div style="font-size:0.72rem; color:rgba(255,255,255,0.35); text-align:center;">
                 Powered by Apache Kafka · PySpark · dbt<br>
-                Data refreshes every 5 minutes
+                Streaming live data (refreshes every 5 seconds)
             </div>
             """,
             unsafe_allow_html=True,
@@ -550,8 +555,10 @@ def chart_daily_gmv(df: pd.DataFrame) -> go.Figure:
         ),
         legend=dict(
             orientation="h",
-            yanchor="bottom",
-            y=1.02,
+            yanchor="top",
+            y=-0.15,
+            xanchor="center",
+            x=0.5,
             bgcolor="rgba(0,0,0,0)",
         ),
         hovermode="x unified",
@@ -672,6 +679,9 @@ def chart_delivery_by_state(df: pd.DataFrame) -> go.Figure:
 
 def main() -> None:
     """Render the full RakuFlow Analytics Streamlit dashboard."""
+    # Stream live data: automatically refresh the dashboard every 5 seconds
+    st_autorefresh(interval=5000, key="live_data_refresh")
+
     start_date, end_date, state_filter = render_sidebar()
 
     # Header
