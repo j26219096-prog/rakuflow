@@ -2,6 +2,11 @@
 
 > 🔴 **Live Demo**: [https://rakuflow.streamlit.app](https://rakuflow.streamlit.app)  
 > _(Dashboard fully cloud-hosted on Streamlit Community Cloud and powered by Neon Serverless PostgreSQL)_
+> ### KPI Cards · Daily GMV · Order Status
+>![RakuFlow Dashboard Overview](assets/dashboard_overview.png)
+
+>### Top 10 Sellers · Avg Delivery Days by State
+>![RakuFlow Charts](assets/dashboard-charts.png)
 
 > A Rakuten-scale, fully Dockerized, end-to-end data engineering platform for e-commerce order analytics — built with Apache Kafka, PySpark, Apache Airflow, dbt, PostgreSQL, Great Expectations, and Streamlit.
 
