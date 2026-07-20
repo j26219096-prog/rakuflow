@@ -24,6 +24,7 @@ pip-wheel-metadata/
 
 # ── Virtual environments ───────────────────────────────────────────────────────
 .venv/
+.venv-*/
 venv/
 env/
 ENV/
@@ -36,6 +37,7 @@ ENV/
 dbt_project/target/
 dbt_project/dbt_packages/
 dbt_project/logs/
+dbt_project/.user.yml
 
 # ── Airflow ────────────────────────────────────────────────────────────────────
 logs/airflow/*
@@ -65,3 +67,10 @@ Thumbs.db
 .coverage
 htmlcov/
 *.xml
+
+# ── Scratch / one-off scripts ───────────────────────────────────────────────────
+init_neon.py
+live_demo.py
+
+# ── Linter caches ────────────────────────────────────────────────────────────────
+.ruff_cache/
