@@ -405,6 +405,6 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for gu
 ---
 
 <div align="center">
-  <strong>Built with ❤️ for Rakuten Japan Data Engineer Internship Application</strong><br>
+  <strong>Built  for Data Engineer Internship </strong><br>
   <sub>⚡ RakuFlow — Where every order tells a story</sub>
 </div>
